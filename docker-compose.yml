@@ -28,11 +28,13 @@ services:
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
       - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/selling_points_db
+      - eureka.client.service-url.defaultZone=http://eureka-server:8761/eureka
     networks:
       - main-network
     depends_on:
       - redis
       - mongodb
+      - eureka-server
 
   redis:
     image: redis/redis-stack:7.4.0-v3
@@ -55,7 +57,29 @@ services:
       - main-network
     volumes:
       - mongodb_data:/data
+  
+  eureka-server:
+    build:
+      context: ../eureka-server
+      dockerfile: Dockerfile
+    ports:
+      - "8761:8761"
+    networks:
+      - main-network
 
+  api-gateway:
+    build:
+      context: ../api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8888"
+    networks:
+      - main-network
+    environment:
+      - eureka.client.service-url.defaultZone=http://eureka-server:8761/eureka
+    depends_on:
+      - eureka-server	  
+     
 networks:
   main-network:
 
